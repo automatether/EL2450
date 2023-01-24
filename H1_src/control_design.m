@@ -17,25 +17,29 @@ yss = 40; % steady state output
 
 %added parameters
 chi=0.5;
-zeta=0.7;
-omega0=0.1;
+zeta=0.8;
+omega0=0.2;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Continuous Control design
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-uppertank = tf(k_tank,[1 Tau]); % Transfer function for upper tank
-lowertank = tf(gamma_tank,[1 Tau*gamma_tank]); % Transfer function for upper tank
+uppertank = tf(k_tank,[Tau 1]); % Transfer function for upper tank
+lowertank = tf(gamma_tank,[Tau*gamma_tank 1]); % Transfer function for upper tank
 G = uppertank*lowertank; % Transfer function from input to lower tank level
 
 % Calculate PID parameters
 [K, Ti, Td, N]=polePlacePID(chi, omega0, zeta, Tau, gamma_tank, k_tank);
 s=tf('s');
-F=K*(1+(1/(Ti*s)+(Td*N*s/(s+N))))
+F=K*(1+(1/(Ti*s))+(Td*N*s/(s+N)));
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Digital Control design
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Ts = 1; % Sampling time
+Ts = 0.27; % Sampling time
+Fd=c2d(F,Ts,'ZOH');
+[num, den]=tfdata(Fd,'v');
+[A_discretized,B_discretized,C_discretized,D_discretized] = tf2ss(num, den);
 
 % Discretize the continous controller, save it in state space form
 % [A_discretized,B_discretized,C_discretized,D_discretized] =
@@ -54,7 +58,7 @@ Wo = 1;
 % State feedback controller gain
 L = 1;
 % observer gain
-K = 1;
+K_obs = 1;
 % reference gain
 lr = 1;
 
